@@ -30,15 +30,16 @@ class Server(object):
             self.handle()
     
     def handle(self):
-        client_connection,client_address = self.listen_socket.accept()
-        request_data = client_connection.recv(1024).decode()
-        
-        req = Request(request_data)
-        # current dir
-        res = Response(self.dir_sir.serve(req.path))
-        client_connection.sendall(res.render())
-        # client_connection.send
-        client_connection.close()
+        try:
+            client_connection,client_address = self.listen_socket.accept()
+            request_data = client_connection.recv(1024).decode()
+            req = Request(request_data)
+            res = Response(self.dir_sir.serve(req.path))
+            client_connection.sendall(res.render())
+            client_connection.close()
+        except Exception as e:
+            print(e)
+            client_connection.close()
 
 if __name__ == '__main__':
     SERVER_ADDRESS = (HOST, PORT) = '', 8888

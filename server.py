@@ -12,10 +12,10 @@ class Server(object):
     address_family = socket.AF_INET
     socket_type = socket.SOCK_STREAM
     quene_size = 1
-    dir_name = '.'
-    dir_sir = DirServ(dir_name)
     
-    def __init__(self,server_address):
+    def __init__(self,server_address,dir_name):
+        self.dir_name = dir_name
+        self.dir_sir = DirServ(dir_name)
         self.listen_socket = listen_socket = socket.socket(self.address_family,self.socket_type)
         listen_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         listen_socket.bind(server_address)
@@ -25,7 +25,7 @@ class Server(object):
         self.server_port = port
     
     def serve(self):
-        print('start listen.')
+        print('start listing at port {port}.'.format(port=self.server_port))
         while True:
             self.handle()
     
@@ -42,8 +42,10 @@ class Server(object):
             client_connection.close()
 
 if __name__ == '__main__':
-    SERVER_ADDRESS = (HOST, PORT) = '', 8888
-    server = Server(SERVER_ADDRESS)
+    rootdir = sys.argv[1]
+    port = int(sys.argv[2])
+    server_address = ('',port)
+    server = Server(server_address,rootdir)
     server.serve()
 
 

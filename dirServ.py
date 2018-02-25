@@ -10,7 +10,7 @@ class DirServ(object):
             if os.path.exists(path):
                 if os.path.isdir(path):
                     names = ['..'] + os.listdir(path)
-                    return '<br/>'.join(['<a href={path} style="font-size:1em;font-family:"Lucida Sans";margin:10px;">{name}</a>'.format(name=name, path=os.path.join(target, name)) for name in names]).encode()
+                    return '<br/>'.join(['<a href={path} style="font-size:1em;font-family:monospace;margin:10px;">{name}</a>'.format(name=name,path=os.path.join(target,name)) for name in names]).encode()
                 else:
                     with open(path, 'rb') as f:
                         c = f.read()

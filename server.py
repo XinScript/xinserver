@@ -42,12 +42,11 @@ class Server(object):
             client_connection.close()
 
 if __name__ == '__main__':
-    rootdir = sys.argv[1]
-    port = int(sys.argv[2])
-    server_address = ('',port)
-    server = Server(server_address,rootdir)
-    server.serve()
-
-
-        
-
+    if len(sys.argv) != 3:
+        print('not match $dir $port.')
+    else:
+        rootdir = sys.argv[1]
+        port = int(sys.argv[2])
+        server_address = ('',port)
+        server = Server(server_address,rootdir)
+        server.serve()

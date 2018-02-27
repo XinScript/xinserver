@@ -6,12 +6,20 @@ from MyFile import File
 import Config
 
 loop = asyncio.get_event_loop()
+
 class Server(object):
 
     def __init__(self,host,port,dir_name):
         self.file= File(dir_name)
         coro = asyncio.start_server(self.handle, host, port, loop=loop)
         self.server = loop.run_until_complete(coro)
+    def start(self):
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            pass
+        loop.run_until_complete(self.close())
+        loop.close()
     
     async def handle(self,reader,writer):
         data = await self.readall(reader)
@@ -37,17 +45,11 @@ class Server(object):
         await self.server.wait_closed()
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         print('please make sure the format follows $dir $port.')
     else:
-        rootdir = sys.argv[1]
-        port = int(sys.argv[2])
-        server = Server('localhost',8888,'.')
-        try:
-            loop.run_forever()
-        except KeyboardInterrupt:
-            pass
-        loop.run_until_complete(server.close())
-        loop.close()
+        hostname,port,rootdir = sys.argv[1],int(sys.argv[2]),sys.argv[3]
+        server = Server(hostname,port,rootdir)
+        server.start()
 
 

@@ -38,7 +38,7 @@ class Server(object):
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print('not match $dir $port.')
+        print('please make sure the format follows $dir $port.')
     else:
         rootdir = sys.argv[1]
         port = int(sys.argv[2])

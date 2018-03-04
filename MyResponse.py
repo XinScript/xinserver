@@ -3,7 +3,7 @@ import Config
 import Common
 
 class Response(object):
-    def __init__(self,body:bytes):
+    def __init__(self,body:bytes,code):
         self.header = header = {}
         header['Date'] = datetime.datetime.utcnow(
         ).strftime(Config.DATE_FORMAT)

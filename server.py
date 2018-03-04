@@ -4,45 +4,46 @@ from MyRequest import Request
 from MyResponse import Response
 from MyFile import File
 import Config
+import socket
+from Asyn import Asyn
+from selectors import DefaultSelector,EVENT_READ
+from Co import Co
 
-loop = asyncio.get_event_loop()
+selector = DefaultSelector()
+asyn = Asyn()
 
 class Server(object):
 
     def __init__(self,host,port,dir_name):
         self.file= File(dir_name)
-        coro = asyncio.start_server(self.handle, host, port, loop=loop)
-        self.server = loop.run_until_complete(coro)
-    def start(self):
-        try:
-            loop.run_forever()
-        except KeyboardInterrupt:
-            pass
-        loop.run_until_complete(self.close())
-        loop.close()
-    
-    async def handle(self,reader,writer):
-        data = await self.readall(reader)
+        self.sock = socket.socket()
+        self.sock.setblocking(False)
+        self.sock.bind((host,port))
+        self.sock.listen(1000)
+        self.req_generator = self._req_generate()
+
+    def handle(self):
+        c_sock,addr = yield from asyn.accept(self.sock)
+        data = yield from asyn.readall(c_sock)
         req = Request(data)
-        content, code = self.file.get(req.path)
-        res = Response(content)
-        res.set_code(code)
-        writer.write(res.render())
-        await writer.drain()
-        writer.close()
+        res = Response(*self.file.get(req.path))
+        data = res.render()
+        yield from asyn.sendall(c_sock,data)
+        self.close()
+        
+    def close(self):
+        self.sock.close()
 
-    async def readall(self,reader):
-        data = []
-        chunk = await reader.read(Config.READ_BUF_SIZE)
-        data.append(chunk)
-        while len(chunk) == Config.READ_BUF_SIZE:
-            chunk = await reader.read(Config.READ_BUF_SIZE)
-            data.append(chunk)
-        return b''.join(data)
-
-    async def close(self):
-        self.server.close()
-        await self.server.wait_closed()
+    def start(self):
+        for i in range(5):
+            Co(self.handle())
+        try:
+            asyn.loop()
+        except KeyboardInterrupt:
+            self.sock.close()
+    def _req_generate(self):
+        while True:
+            yield Co(self.handle())
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:

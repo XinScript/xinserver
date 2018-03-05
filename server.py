@@ -13,8 +13,10 @@ selector = DefaultSelector()
 asyn = Asyn()
 
 class Server(object):
-
+    queue_size = 1000
     def __init__(self,host,port,dir_name):
+        self.pool = {}
+        self.cid_count = 0
         self.file= File(dir_name)
         self.sock = socket.socket()
         self.sock.setblocking(False)
@@ -23,24 +25,40 @@ class Server(object):
         self.req_generator = self._req_generate()
 
     def handle(self):
-        c_sock,addr = yield from asyn.accept(self.sock)
-        data = yield from asyn.readall(c_sock)
-        req = Request(data)
-        res = Response(*self.file.get(req.path))
-        data = res.render()
-        yield from asyn.sendall(c_sock,data)
-        self.close()
+        try:
+            c_sock,addr = yield from asyn.accept(self.sock)
+            next(self.req_generator)
+            data = yield from asyn.readall(c_sock)
+            req = Request(data)
+            res = Response(*self.file.get(req.path))
+            data = res.render()
+            yield from asyn.sendall(c_sock,data)
+        except Exception:
+            pass
+    
+    # def readall(self, c_sock):
+    #     data = []
+    #     while True:
+    #         chunk = yield from asyn.recv(c_sock, 4096)
+    #         if not chunk:
+    #             break
+    #         else:
+    #             data.append(chunk)
+    #     return b''.join(data)
+    def _remove_task(self,cid):
+        pass
         
     def close(self):
         self.sock.close()
 
     def start(self):
-        for i in range(5):
-            Co(self.handle())
         try:
+            Co(self.handle())
             asyn.loop()
-        except KeyboardInterrupt:
-            self.sock.close()
+        except Exception as e:
+            self.sock.shutdown(socket.SHUT_RDWR)
+            raise e
+
     def _req_generate(self):
         while True:
             yield Co(self.handle())

@@ -8,8 +8,9 @@ write your own handler
 	
     import from xinserver.Server import Server
 	class MyServer(Server):
+
     	def handler(self,c_sock,addr):
-        '''your codes'''
+        	'''your codes'''
 ## Classes
 
 

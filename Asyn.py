@@ -3,24 +3,22 @@ from .Future import Future
 from .Helper import Reader, Writer
 from .Co import Co
 from . import Config
-
-
 class Asyn(object):
 
     _sel = DefaultSelector()
 
-    def listen(self,sock,handler):
-        self._sel.register(sock, EVENT_READ, (self._accept, handler))
+    def listen(self,sock,handle):
+        self._sel.register(sock, EVENT_READ, (self._accept, handle))
 
     def accept(self, sock):
         fut = Future()
         self._sel.register(sock, EVENT_READ, (self._accept, fut))
         return (yield from fut)
 
-    def _accept(self, sock, mask, handler):
+    def _accept(self, sock, mask, handle):
         c_sock, addr = sock.accept()
         c_sock.setblocking(False)
-        Co(handler(c_sock,addr))
+        Co(handle(c_sock,addr))
 
     def readall(self, c_sock):
         fut = Future()

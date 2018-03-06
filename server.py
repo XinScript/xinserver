@@ -4,8 +4,11 @@ from .Helper import Request,Response,Asset
 from . import Config
 from .Asyn import Asyn
 from selectors import DefaultSelector,EVENT_READ
+from logging import Logger,DEBUG
+
 
 asyn = Asyn()
+logger = Logger('logger',DEBUG)
 
 class Server(object):
 
@@ -18,7 +21,7 @@ class Server(object):
         self.sock.bind((host,port))
         self.sock.listen(Config.QUENE_SIZE)
 
-    def handler(self,c_sock,addr):
+    def handle(self,c_sock,addr):
         try:
             with c_sock:
                 data = yield from asyn.readall(c_sock)
@@ -26,6 +29,11 @@ class Server(object):
                 res = Response(*self.asset.get(req.path))
                 data = res.render()
                 yield from asyn.sendall(c_sock,data)
+        
+        except IndexError:
+            with c_sock:
+                c_sock.sendall(c_sock,Response.internal_error().render())
+        
         except Exception as e:
             raise e
     
@@ -34,13 +42,15 @@ class Server(object):
 
     def start(self):
         try:
-            asyn.listen(self.sock,self.handler)
+            asyn.listen(self.sock,self.handle)
+            logger.warning('Server Start.')
             asyn.loop()
         except KeyboardInterrupt as e:
-            print('Server stopped.')
+            logger.warning('Server Stopped.')
             self.close()
         except Exception as e:
-            print('Server stopped because of {error}'.format(error=str(e)))
+            logger.exception(e)
             self.close()
+
 
 

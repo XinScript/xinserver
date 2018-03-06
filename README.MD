@@ -7,10 +7,13 @@ serve static assets
 write your own handler
 	
     import from xinserver.Server import Server
+
 	class MyServer(Server):
 
     	def handler(self,c_sock,addr):
-        	'''your codes'''
+
+        	'''overwrite here'''
+        	
 ## Classes
 
 

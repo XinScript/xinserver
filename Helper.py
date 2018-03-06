@@ -5,17 +5,19 @@ import os
 
 
 class Response(object):
-    def __init__(self, body: bytes, code):
+    def __init__(self, body, code=Common.OK):
+        self.body = body
+        self.code = code
         self.header = header = {}
         header['Date'] = datetime.datetime.utcnow(
         ).strftime(Config.DATE_FORMAT)
         header['Server'] = Config.SERVER_NAME
-        self.body = body
+        self._clean()
         header['Content-Length'] = str(len(self.body))
-        self.set_code(Common.OK)
 
     def set_code(self, code):
         self.code = code
+        return self
 
     def render(self)->bytes:
         status = 'HTTP/{version} {code}\r\n'.format(
@@ -24,6 +26,21 @@ class Response(object):
             [k + ': ' + v + '\r\n' for k, v in self.header.items()])
         http_info = status + header + '\r\n'
         return b''.join([http_info.encode(), self.body])
+    
+    def _clean(self):
+        if self.code == Common.FORBIDDEN:
+            self.body = 'Permission Denied.'.encode()
+        elif self.code == Common.NOT_FOUND:
+            self.body = 'Not Found.'.encode()
+        elif self.code == Common.INTERNAL_SERVER_ERROR:
+            self.body = 'Server Internal Error.'.encode()
+
+    @classmethod
+    def internal_error(cls):
+        return Response('Server Internal Error.'.encode(),500)
+
+
+
 
 
 class Request(object):
@@ -77,7 +94,7 @@ class Asset(object):
         self.dirname = os.path.realpath(os.path.join(os.getcwd(), dirname))
 
     def get(self, target: str)->tuple:
-        c = bytes()
+        content,code = b'',Common.OK
         path = os.path.realpath(''.join([self.dirname, target]))
         if path.find(self.dirname) != -1:
             if os.path.exists(path):
@@ -88,9 +105,9 @@ class Asset(object):
                     return '<br/>'.join(['<a href={path} style={style}>{name}</a>'.format(name=name, style=dir_style if os.path.isdir(path+'/'+name) else file_style, path=os.path.join(target, name)) for name in names]).encode(), Common.OK
                 else:
                     with open(path, 'rb') as f:
-                        c = f.read()
-                        return c, Common.OK
+                        content = f.read()
             else:
-                return 'NOT FOUND.'.encode(), Common.NOT_FOUND
+                code = Common.NOT_FOUND
         else:
-            return 'PERMISSION DENIED.'.encode(), Common.FORBIDDEN
+            code = Common.FORBIDDEN
+        return content,code

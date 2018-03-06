@@ -1,50 +1,37 @@
 import sys
 import asyncio
-from MyRequest import Request
-from MyResponse import Response
-from MyFile import File
+# from MyRequest import Request
+# from MyResponse import Response
+# from MyFile import File
+from Helper import Request,Response,Asset
 import Config
 import socket
 from Asyn import Asyn
 from selectors import DefaultSelector,EVENT_READ
-from Co import Co
-
-selector = DefaultSelector()
 asyn = Asyn()
 
 class Server(object):
-    queue_size = 1000
+
     def __init__(self,host,port,dir_name):
         self.pool = {}
         self.cid_count = 0
-        self.file= File(dir_name)
+        self.asset= Asset(dir_name)
         self.sock = socket.socket()
         self.sock.setblocking(False)
         self.sock.bind((host,port))
-        self.sock.listen(1000)
-        self.req_generator = self._req_generate()
+        self.sock.listen(Config.QUENE_SIZE)
 
-    def handle(self):
+    def handler(self,c_sock,addr):
         try:
-            c_sock,addr = yield from asyn.accept(self.sock)
-            next(self.req_generator)
             data = yield from asyn.readall(c_sock)
             req = Request(data)
-            res = Response(*self.file.get(req.path))
+            res = Response(*self.asset.get(req.path))
             data = res.render()
             yield from asyn.sendall(c_sock,data)
-        except Exception:
-            pass
+            c_sock.close()
+        except Exception as e:
+            raise e
     
-    # def readall(self, c_sock):
-    #     data = []
-    #     while True:
-    #         chunk = yield from asyn.recv(c_sock, 4096)
-    #         if not chunk:
-    #             break
-    #         else:
-    #             data.append(chunk)
-    #     return b''.join(data)
     def _remove_task(self,cid):
         pass
         
@@ -53,15 +40,10 @@ class Server(object):
 
     def start(self):
         try:
-            Co(self.handle())
+            asyn.listen(self.sock,self.handler)
             asyn.loop()
         except Exception as e:
-            self.sock.shutdown(socket.SHUT_RDWR)
             raise e
-
-    def _req_generate(self):
-        while True:
-            yield Co(self.handle())
 
 if __name__ == '__main__':
     if len(sys.argv) != 4:

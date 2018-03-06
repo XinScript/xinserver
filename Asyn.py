@@ -1,24 +1,25 @@
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 from Future import Future
-from MyRequest import Request
-from MyResponse import Response
-from Reader import Reader, Writer
+from Helper import Reader, Writer
+from Co import Co
 
 
 class Asyn(object):
 
     _sel = DefaultSelector()
 
+    def listen(self,sock,handler):
+        self._sel.register(sock, EVENT_READ, (self._accept, handler))
+
     def accept(self, sock):
         fut = Future()
         self._sel.register(sock, EVENT_READ, (self._accept, fut))
         return (yield from fut)
 
-    def _accept(self, sock, mask, fut):
-        self._sel.unregister(sock)
+    def _accept(self, sock, mask, handler):
         c_sock, addr = sock.accept()
         c_sock.setblocking(False)
-        fut.set_result((c_sock, addr))
+        Co(handler(c_sock,addr))
 
     def readall(self, c_sock):
         fut = Future()

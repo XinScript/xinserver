@@ -1,21 +1,18 @@
-import sys
 import asyncio
-# from MyRequest import Request
-# from MyResponse import Response
-# from MyFile import File
-from Helper import Request,Response,Asset
-import Config
+from .Helper import Request,Response,Asset
+from . import Config
 import socket
-from Asyn import Asyn
+from .Asyn import Asyn
 from selectors import DefaultSelector,EVENT_READ
+
 asyn = Asyn()
 
 class Server(object):
 
-    def __init__(self,host,port,dir_name):
+    def __init__(self,host,port,dirpath=None):
         self.pool = {}
         self.cid_count = 0
-        self.asset= Asset(dir_name)
+        self.asset= Asset(dirpath) if dirpath else None
         self.sock = socket.socket()
         self.sock.setblocking(False)
         self.sock.bind((host,port))
@@ -32,9 +29,6 @@ class Server(object):
         except Exception as e:
             raise e
     
-    def _remove_task(self,cid):
-        pass
-        
     def close(self):
         self.sock.close()
 
@@ -42,15 +36,11 @@ class Server(object):
         try:
             asyn.listen(self.sock,self.handler)
             asyn.loop()
+        except KeyboardInterrupt as e:
+            print('Server stoped.')
+            self.close()
         except Exception as e:
-            raise e
-
-if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print('please make sure the format follows $dir $port.')
-    else:
-        hostname,port,rootdir = sys.argv[1],int(sys.argv[2]),sys.argv[3]
-        server = Server(hostname,port,rootdir)
-        server.start()
+            print('Server stoped because of {error}'.format(error=str(e)))
+            self.close()
 
 

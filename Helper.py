@@ -1,6 +1,6 @@
 import datetime
-import Config
-import Common
+from . import Config
+from . import Common
 import os
 
 class Response(object):

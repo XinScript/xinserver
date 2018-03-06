@@ -1,7 +1,8 @@
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
-from Future import Future
-from Helper import Reader, Writer
-from Co import Co
+from .Future import Future
+from .Helper import Reader, Writer
+from .Co import Co
+from . import Config
 
 
 class Asyn(object):
@@ -32,9 +33,9 @@ class Asyn(object):
         return (yield from fut)
 
     def _recv(self, c_sock, mask, fut, reader):
-        chunk = c_sock.recv(4098)
+        chunk = c_sock.recv(Config.READ_BUF_SIZE)
         reader.append(chunk)
-        if len(chunk) != 4098:
+        if len(chunk) != Config.READ_BUF_SIZE:
             self._remove_reader(c_sock)
             fut.set_result(reader.get_data())
 
@@ -65,5 +66,7 @@ class Asyn(object):
                 for key, mask in events:
                     cb, *args = key.data
                     cb(key.fileobj, mask, *args)
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
             raise e

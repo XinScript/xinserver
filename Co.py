@@ -1,4 +1,5 @@
-from Future import Future
+from .Future import Future
+
 class Co(object):
     def __init__(self,coro,cid=None):
         f = Future()

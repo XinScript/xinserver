@@ -1,7 +1,7 @@
 import asyncio
+import socket
 from .Helper import Request,Response,Asset
 from . import Config
-import socket
 from .Asyn import Asyn
 from selectors import DefaultSelector,EVENT_READ
 
@@ -20,12 +20,12 @@ class Server(object):
 
     def handler(self,c_sock,addr):
         try:
-            data = yield from asyn.readall(c_sock)
-            req = Request(data)
-            res = Response(*self.asset.get(req.path))
-            data = res.render()
-            yield from asyn.sendall(c_sock,data)
-            c_sock.close()
+            with c_sock:
+                data = yield from asyn.readall(c_sock)
+                req = Request(data)
+                res = Response(*self.asset.get(req.path))
+                data = res.render()
+                yield from asyn.sendall(c_sock,data)
         except Exception as e:
             raise e
     
@@ -37,10 +37,10 @@ class Server(object):
             asyn.listen(self.sock,self.handler)
             asyn.loop()
         except KeyboardInterrupt as e:
-            print('Server stoped.')
+            print('Server stopped.')
             self.close()
         except Exception as e:
-            print('Server stoped because of {error}'.format(error=str(e)))
+            print('Server stopped because of {error}'.format(error=str(e)))
             self.close()
 
 

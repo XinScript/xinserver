@@ -3,8 +3,9 @@ from . import Config
 from . import Common
 import os
 
+
 class Response(object):
-    def __init__(self,body:bytes,code):
+    def __init__(self, body: bytes, code):
         self.header = header = {}
         header['Date'] = datetime.datetime.utcnow(
         ).strftime(Config.DATE_FORMAT)
@@ -13,14 +14,16 @@ class Response(object):
         header['Content-Length'] = str(len(self.body))
         self.set_code(Common.OK)
 
-    def set_code(self,code):
+    def set_code(self, code):
         self.code = code
-        
+
     def render(self)->bytes:
-        status = 'HTTP/{version} {code}\r\n'.format(version=Config.VERSION,code=self.code)
-        header = ''.join([k + ': ' + v + '\r\n' for k, v in self.header.items()])
+        status = 'HTTP/{version} {code}\r\n'.format(
+            version=Config.VERSION, code=self.code)
+        header = ''.join(
+            [k + ': ' + v + '\r\n' for k, v in self.header.items()])
         http_info = status + header + '\r\n'
-        return b''.join([http_info.encode(),self.body])
+        return b''.join([http_info.encode(), self.body])
 
 
 class Request(object):
@@ -47,7 +50,7 @@ class Reader(object):
     def append(self, chunk):
         self.data_cache.append(chunk)
 
-    def get_data(self):
+    def get_data(self)->bytes:
         return b''.join(self.data_cache)
 
 
@@ -57,15 +60,16 @@ class Writer(object):
         self.sock = sock
         self.allsent = False
 
-    def send(self):
+    def send(self)->int:
         if self.allsent:
-            pass
+            return 0
         else:
             n = self.sock.send(self.data)
             if n == len(self.data):
                 self.allsent = True
             else:
                 self.data = self.data[n:]
+            return n
 
 
 class Asset(object):
@@ -79,7 +83,9 @@ class Asset(object):
             if os.path.exists(path):
                 if os.path.isdir(path):
                     names = ['..'] + os.listdir(path)
-                    return '<br/>'.join(['<a href={path} style="font-size:1em;font-family:monospace;margin:10px;">{name}</a>'.format(name=name, path=os.path.join(target, name)) for name in names]).encode(), Common.OK
+                    file_style = '"font-size:1em;font-family:monospace;margin:10px;color:blue;"'
+                    dir_style = '"font-size:1em;font-family:monospace;margin:10px;color:green;"'
+                    return '<br/>'.join(['<a href={path} style={style}>{name}</a>'.format(name=name, style=dir_style if os.path.isdir(path+'/'+name) else file_style, path=os.path.join(target, name)) for name in names]).encode(), Common.OK
                 else:
                     with open(path, 'rb') as f:
                         c = f.read()

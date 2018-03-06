@@ -66,7 +66,5 @@ class Asyn(object):
                 for key, mask in events:
                     cb, *args = key.data
                     cb(key.fileobj, mask, *args)
-        except KeyboardInterrupt:
-            pass
         except Exception as e:
             raise e

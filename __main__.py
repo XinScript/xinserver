@@ -1,5 +1,5 @@
 import sys
-from Server import Server
+from .Server import Server
 
 if len(sys.argv) != 4:
     print('Please make sure the arguments correct:$hostname $port $dirpath')

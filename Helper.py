@@ -1,6 +1,6 @@
 import datetime
-from . import Config
-from . import Common
+import Config
+import Common
 import os
 
 

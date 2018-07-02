@@ -1,4 +1,4 @@
-from .Future import Future
+from Future import Future
 
 class Co(object):
     def __init__(self,coro,cid=None):
@@ -14,7 +14,6 @@ class Co(object):
             next_future = self.coro.send(future.result)
         except StopIteration:
             self.isdone = True
-        # except Exception
         else:
             next_future.add_done_callback(self.next_step)
 

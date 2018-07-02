@@ -1,8 +1,7 @@
-import asyncio
 import socket
-from .Helper import Request,Response,Asset
-from . import Config
-from .Asyn import Asyn
+from Helper import Request,Response,Asset
+import Config
+from Asyn import Asyn
 from selectors import DefaultSelector,EVENT_READ
 from logging import Logger,DEBUG
 
